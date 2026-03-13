@@ -1,9 +1,10 @@
-const CONGRESS_API_KEY = import.meta.env.VITE_CONGRESS_API_KEY || 'DEMO_KEY';
+const CONGRESS_API_KEY = import.meta.env.VITE_CONGRESS_API_KEY;
 const OPENSTATES_API_KEY = import.meta.env.VITE_OPENSTATES_API_KEY;
 
 // ── Federal reps via Congress.gov ─────────────────────────────────────────────
 
 async function getFederalReps(zip) {
+  if (!CONGRESS_API_KEY) throw new Error('VITE_CONGRESS_API_KEY is not configured');
   const url = `https://api.congress.gov/v3/member?zipCode=${encodeURIComponent(zip)}&api_key=${CONGRESS_API_KEY}`;
   const res = await fetch(url);
   const data = await res.json();

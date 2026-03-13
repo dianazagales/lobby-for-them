@@ -87,7 +87,7 @@ export async function deleteBill(id) {
 }
 
 export async function verifyAdminPassword(password) {
-  if (!supabase) return password === 'lobbyforthem2025';
+  if (!supabase) return password === import.meta.env.VITE_ADMIN_PASSWORD;
   const { data } = await supabase
     .from('admin_settings')
     .select('password_hash')
