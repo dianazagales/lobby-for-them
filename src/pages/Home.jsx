@@ -1,10 +1,13 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { getFeaturedBills } from '../lib/supabase';
 import UrgencyBadge from '../components/UrgencyBadge';
 
 export default function Home() {
   const [topBills, setTopBills] = useState([]);
+  const [zip, setZip] = useState('');
+  const [zipError, setZipError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     async function loadTopBills() {
@@ -20,6 +23,15 @@ export default function Home() {
     loadTopBills();
   }, []);
 
+  function handleZipSubmit(e) {
+    e.preventDefault();
+    if (!zip.match(/^\d{5}$/)) {
+      setZipError('Please enter a valid 5-digit zip code.');
+      return;
+    }
+    navigate(`/bills?zip=${zip}`);
+  }
+
   return (
     <div>
       {/* Hero */}
@@ -32,34 +44,38 @@ export default function Home() {
           <p className="text-lg md:text-xl text-white/80 mb-10 max-w-xl mx-auto">
             Find active animal welfare bills and contact your representatives in seconds.
           </p>
-          <Link
-            to="/bills"
-            className="inline-block bg-orange hover:bg-orange-dark text-white font-bold text-lg px-8 py-4 rounded-xl transition-colors shadow-lg"
-          >
-            See Active Bills →
-          </Link>
-        </div>
-      </section>
 
-      {/* How it works */}
-      <section className="py-16 px-4 bg-warm-white">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl font-bold text-navy text-center mb-10">How It Works</h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              { step: '1', title: 'Browse Active Bills', desc: 'See the animal welfare legislation that needs your voice right now.' },
-              { step: '2', title: 'Enter Your Zip Code', desc: 'We find your exact federal and state representatives.' },
-              { step: '3', title: 'Send Your Email', desc: 'Use our pre-written email template — customize it, then send in one click.' },
-            ].map(({ step, title, desc }) => (
-              <div key={step} className="text-center">
-                <div className="w-12 h-12 bg-orange text-white rounded-full font-extrabold text-xl flex items-center justify-center mx-auto mb-4">
-                  {step}
-                </div>
-                <h3 className="font-bold text-navy text-lg mb-2">{title}</h3>
-                <p className="text-gray-600 text-sm">{desc}</p>
-              </div>
-            ))}
-          </div>
+          {/* Zip CTA */}
+          <form onSubmit={handleZipSubmit} className="flex flex-col items-center gap-3">
+            <div className="flex w-full max-w-md shadow-xl rounded-xl overflow-hidden">
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="Enter your zip code"
+                value={zip}
+                onChange={e => {
+                  setZipError(null);
+                  setZip(e.target.value.replace(/\D/g, '').slice(0, 5));
+                }}
+                maxLength={5}
+                className="flex-1 px-5 py-4 text-lg text-gray-900 placeholder-gray-400 focus:outline-none"
+                aria-label="ZIP code"
+              />
+              <button
+                type="submit"
+                className="bg-orange hover:bg-orange-dark text-white font-bold text-lg px-7 py-4 transition-colors whitespace-nowrap"
+              >
+                Find My Bills →
+              </button>
+            </div>
+            {zipError && <p className="text-orange text-sm font-medium">{zipError}</p>}
+            <p className="text-white/50 text-sm">
+              Or{' '}
+              <Link to="/bills" className="text-white/70 hover:text-white underline underline-offset-2 transition-colors">
+                browse all active bills
+              </Link>
+            </p>
+          </form>
         </div>
       </section>
 

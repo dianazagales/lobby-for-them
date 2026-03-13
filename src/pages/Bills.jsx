@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { getFeaturedBills, getCachedLegiScanData, setCachedLegiScanData } from '../lib/supabase';
 import { getBill } from '../lib/legiscan';
+import { getRepresentatives } from '../lib/civic';
+import { useZip } from '../context/ZipContext';
 import BillCard from '../components/BillCard';
 
 export default function Bills() {
@@ -9,6 +12,9 @@ export default function Bills() {
   const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const [searchParams] = useSearchParams();
+  const { setZip, setReps, setUserState } = useZip();
 
   useEffect(() => {
     async function load() {
@@ -38,6 +44,24 @@ export default function Bills() {
     }
     load();
   }, []);
+
+  // Auto-lookup reps and filter by state when ?zip= is in the URL
+  useEffect(() => {
+    const zipParam = searchParams.get('zip');
+    if (!zipParam || !zipParam.match(/^\d{5}$/)) return;
+
+    setZip(zipParam);
+
+    async function autoLookup() {
+      const { reps, state } = await getRepresentatives(zipParam);
+      if (reps) setReps(reps);
+      if (state) {
+        setUserState(state);
+        setFilter(state.toUpperCase());
+      }
+    }
+    autoLookup();
+  }, [searchParams]);
 
   const states = ['all', 'US', ...Array.from(new Set((bills || []).filter(b => b.state !== 'US').map(b => b.state))).sort()];
 
