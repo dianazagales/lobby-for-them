@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Navy circle background -->
+  <circle cx="50" cy="50" r="50" fill="#1a2744"/>
+
+  <!-- Capitol icon (white), scaled and centered in circle -->
+  <!-- Original viewBox 0 0 100 78, scaled to fit ~70x55 centered in 100x100 circle -->
+  <g transform="translate(15, 22) scale(0.7)" fill="white">
+    <!-- Pediment triangle -->
+    <polygon points="6,26 50,4 94,26"/>
+    <!-- Upper entablature bands -->
+    <rect x="6"  y="26" width="88" height="5" rx="2"/>
+    <rect x="8"  y="33" width="84" height="3" rx="1"/>
+    <!-- 5 columns -->
+    <rect x="12"  y="36" width="12" height="5" rx="2"/>
+    <rect x="14"  y="41" width="8"  height="21"/>
+    <rect x="12"  y="62" width="12" height="5" rx="2"/>
+
+    <rect x="28"  y="36" width="12" height="5" rx="2"/>
+    <rect x="30"  y="41" width="8"  height="21"/>
+    <rect x="28"  y="62" width="12" height="5" rx="2"/>
+
+    <rect x="44"  y="36" width="12" height="5" rx="2"/>
+    <rect x="46"  y="41" width="8"  height="21"/>
+    <rect x="44"  y="62" width="12" height="5" rx="2"/>
+
+    <rect x="60"  y="36" width="12" height="5" rx="2"/>
+    <rect x="62"  y="41" width="8"  height="21"/>
+    <rect x="60"  y="62" width="12" height="5" rx="2"/>
+
+    <rect x="76"  y="36" width="12" height="5" rx="2"/>
+    <rect x="78"  y="41" width="8"  height="21"/>
+    <rect x="76"  y="62" width="12" height="5" rx="2"/>
+
+    <!-- Lower steps -->
+    <rect x="6"  y="68" width="88" height="4" rx="2"/>
+    <rect x="2"  y="73" width="96" height="5" rx="2"/>
+  </g>
+</svg>
