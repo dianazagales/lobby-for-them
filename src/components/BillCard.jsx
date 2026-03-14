@@ -1,9 +1,15 @@
 import { Link } from 'react-router-dom';
 import UrgencyBadge from './UrgencyBadge';
 
+// Status IDs where action is no longer possible — never show as Urgent
+const TERMINAL_STATUSES = new Set([2, 3, 4, 8]); // Engrossed, Enrolled, Passed, Chaptered
+
 export default function BillCard({ bill, legiData }) {
   const title = bill.custom_title || legiData?.title || `Bill #${bill.legiscan_bill_id}`;
   const status = legiData ? getStatusLabel(legiData.status) : null;
+  const urgency = (bill.urgency === 'high' && TERMINAL_STATUSES.has(legiData?.status))
+    ? 'medium'
+    : bill.urgency;
   const lastAction = legiData?.history?.[legiData.history.length - 1];
   const sponsor = legiData?.sponsors?.[0];
 
@@ -14,7 +20,7 @@ export default function BillCard({ bill, legiData }) {
           <span className={`text-xs font-bold px-2 py-0.5 rounded ${bill.state === 'US' ? 'bg-navy text-white' : 'bg-gray-700 text-white'}`}>
             {bill.state === 'US' ? 'FEDERAL' : bill.state}
           </span>
-          <UrgencyBadge urgency={bill.urgency} />
+          <UrgencyBadge urgency={urgency} />
         </div>
       </div>
 

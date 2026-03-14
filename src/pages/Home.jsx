@@ -94,7 +94,7 @@ export default function Home() {
                     </span>
                     <UrgencyBadge urgency={bill.urgency} />
                   </div>
-                  <h3 className="font-bold text-navy text-sm group-hover:text-orange transition-colors leading-snug">
+                  <h3 className="font-bold text-navy text-sm leading-snug">
                     {bill.custom_title || `Bill #${bill.legiscan_bill_id}`}
                   </h3>
                   <p className="text-xs text-gray-500 mt-2 line-clamp-2">{bill.why_it_matters}</p>

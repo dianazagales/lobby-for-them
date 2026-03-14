@@ -29,7 +29,7 @@ function CapitolLogo() {
 }
 
 const navLinkClass = ({ isActive }) =>
-  `text-sm font-medium transition-colors ${
+  `text-base font-medium transition-colors ${
     isActive ? 'text-orange border-b-2 border-orange pb-0.5' : 'hover:text-orange'
   }`;
 

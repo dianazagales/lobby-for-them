@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { getFeaturedBills, getCachedLegiScanData, setCachedLegiScanData } from '../lib/supabase';
+import { getFeaturedBills, getCachedLegiScanData, setCachedLegiScanData, deactivateBill } from '../lib/supabase';
 import { getBill } from '../lib/legiscan';
 import { getRepresentatives } from '../lib/civic';
 import { useZip } from '../context/ZipContext';
 import BillCard from '../components/BillCard';
 
+
+// LegiScan status IDs where no further action is possible
+const NON_ACTIONABLE_STATUSES = new Set([3, 4, 5, 6, 8, 11]); // Enrolled, Passed, Vetoed, Failed, Chaptered, Report DNP
 
 const SORT_OPTIONS = [
   { value: 'urgent',  label: 'Most Urgent First' },
@@ -49,6 +52,12 @@ export default function Bills() {
           }
         }
         if (cached) {
+          // If LegiScan reports a non-actionable status, silently deactivate and hide
+          if (NON_ACTIONABLE_STATUSES.has(cached.status)) {
+            deactivateBill(bill.id);
+            setBills(prev => prev.filter(b => b.id !== bill.id));
+            continue;
+          }
           setLegiDataMap(prev => ({ ...prev, [bill.legiscan_bill_id]: cached }));
         }
       }

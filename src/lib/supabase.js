@@ -86,6 +86,11 @@ export async function deleteBill(id) {
   return supabase.from('featured_bills').delete().eq('id', id);
 }
 
+export async function deactivateBill(id) {
+  if (!supabase) return;
+  await supabase.from('featured_bills').update({ active: false }).eq('id', id);
+}
+
 export async function verifyAdminPassword(password) {
   if (!supabase) return false;
   const { data } = await supabase
