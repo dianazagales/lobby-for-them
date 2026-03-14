@@ -38,11 +38,11 @@ export default function Home() {
       <section className="bg-navy text-white py-20 px-4">
         <div className="max-w-3xl mx-auto text-center">
           <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6 leading-tight">
-            Animals Can't Lobby.<br />
+            They Can't Speak Up.<br />
             <span className="text-orange">You Can.</span>
           </h1>
           <p className="text-lg md:text-xl text-white/80 mb-10 max-w-xl mx-auto">
-            Find active animal welfare bills and contact your representatives in seconds.
+            Find animal welfare bills in your state and contact your rep in one click.
           </p>
 
           {/* Zip CTA */}
