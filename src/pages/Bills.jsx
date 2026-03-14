@@ -6,15 +6,6 @@ import { getRepresentatives } from '../lib/civic';
 import { useZip } from '../context/ZipContext';
 import BillCard from '../components/BillCard';
 
-const STATUS_KEY = [
-  { label: 'Urgent',     color: 'bg-orange',    desc: 'Vote or deadline approaching — act now' },
-  { label: 'Active',     color: 'bg-blue-600',  desc: 'Moving through the legislature' },
-  { label: 'Monitor',    color: 'bg-gray-400',  desc: 'Early stage — worth watching' },
-  { label: 'Introduced', color: 'bg-gray-500',  desc: 'Recently filed, early stage' },
-  { label: 'Engrossed',  color: 'bg-indigo-600',desc: 'Passed one chamber, moving to the next' },
-  { label: 'Passed',     color: 'bg-green-600', desc: 'Passed the legislature, awaiting signature' },
-  { label: 'Signed',     color: 'bg-emerald-700', desc: 'Signed into law' },
-];
 
 const SORT_OPTIONS = [
   { value: 'urgent',  label: 'Most Urgent First' },
@@ -31,7 +22,6 @@ export default function Bills() {
   const [activeFilters, setActiveFilters] = useState(new Set());
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('urgent');
-  const [showKey, setShowKey] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -174,28 +164,6 @@ export default function Bills() {
             </button>
           );
         })}
-      </div>
-
-      {/* Status key toggle */}
-      <div className="mb-5">
-        <button
-          onClick={() => setShowKey(v => !v)}
-          className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
-        >
-          {showKey ? 'Hide status guide ↑' : 'What do these mean? ↓'}
-        </button>
-        {showKey && (
-          <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1.5 p-3 bg-gray-50 rounded-lg border border-gray-100">
-            {STATUS_KEY.map(s => (
-              <div key={s.label} className="flex items-center gap-1.5 text-xs text-gray-600">
-                <span className={`inline-block px-1.5 py-0.5 rounded text-white font-semibold uppercase tracking-wide text-[10px] ${s.color}`}>
-                  {s.label}
-                </span>
-                <span>{s.desc}</span>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Sort — floated right, above the third column */}

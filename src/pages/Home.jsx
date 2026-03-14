@@ -47,7 +47,7 @@ export default function Home() {
 
           {/* Zip CTA */}
           <form onSubmit={handleZipSubmit} className="flex flex-col items-center gap-3">
-            <div className="flex w-full max-w-md shadow-xl rounded-xl overflow-hidden">
+            <div className="flex flex-col sm:flex-row w-full max-w-md gap-2 sm:gap-0 sm:shadow-xl sm:rounded-xl sm:overflow-hidden">
               <input
                 type="text"
                 inputMode="numeric"
@@ -58,12 +58,12 @@ export default function Home() {
                   setZip(e.target.value.replace(/\D/g, '').slice(0, 5));
                 }}
                 maxLength={5}
-                className="flex-1 px-5 py-4 text-lg text-gray-900 placeholder-gray-400 focus:outline-none"
+                className="flex-1 px-5 py-4 text-lg text-gray-900 placeholder-gray-400 focus:outline-none rounded-xl sm:rounded-none shadow-xl sm:shadow-none"
                 aria-label="ZIP code"
               />
               <button
                 type="submit"
-                className="bg-orange hover:bg-orange-dark text-white font-bold text-lg px-7 py-4 transition-colors whitespace-nowrap"
+                className="bg-orange hover:bg-orange-dark text-white font-bold text-lg px-7 py-4 transition-colors whitespace-nowrap rounded-xl sm:rounded-none shadow-xl sm:shadow-none"
               >
                 Find My Bills →
               </button>
@@ -80,7 +80,7 @@ export default function Home() {
       {topBills.length > 0 && (
         <section className="py-12 px-4 bg-white">
           <div className="max-w-5xl mx-auto">
-            <h2 className="text-xl font-bold text-navy mb-6">Most Urgent Bills Right Now</h2>
+            <h2 className="text-xl font-bold text-navy mb-6">Most Urgent</h2>
             <div className="grid md:grid-cols-3 gap-5">
               {topBills.map(bill => (
                 <Link
