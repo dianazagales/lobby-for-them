@@ -9,7 +9,7 @@ import BillCard from '../components/BillCard';
 export default function Bills() {
   const [bills, setBills] = useState([]);
   const [legiDataMap, setLegiDataMap] = useState({});
-  const [filter, setFilter] = useState('all');
+  const [activeFilters, setActiveFilters] = useState(new Set()); // empty = show all
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -52,23 +52,48 @@ export default function Bills() {
 
     setZip(zipParam);
 
-    async function autoLookup() {
-      const { reps, state } = await getRepresentatives(zipParam);
-      if (reps) setReps(reps);
-      if (state) {
-        setUserState(state);
-        setFilter(state.toUpperCase());
+    // Geocode zip directly to get state for filtering — fast, no auth, independent of rep APIs
+    async function resolveState() {
+      try {
+        const res = await fetch(`https://api.zippopotam.us/us/${zipParam}`);
+        if (res.ok) {
+          const data = await res.json();
+          const state = data.places?.[0]?.['state abbreviation'];
+          if (state) setActiveFilters(new Set(['US', state.toUpperCase()]));
+        }
+      } catch (e) {
+        console.warn('Zip geocode failed:', e);
       }
     }
-    autoLookup();
+
+    // Fetch reps in background for the email composer on bill detail pages
+    async function resolveReps() {
+      const { reps, state } = await getRepresentatives(zipParam);
+      if (reps) setReps(reps);
+      if (state) setUserState(state);
+    }
+
+    resolveState();
+    resolveReps();
   }, [searchParams]);
 
   const states = ['all', 'US', ...Array.from(new Set((bills || []).filter(b => b.state !== 'US').map(b => b.state))).sort()];
 
-  const filtered = bills.filter(b => {
-    if (filter === 'all') return true;
-    return b.state === filter;
-  });
+  const filtered = activeFilters.size === 0
+    ? bills
+    : bills.filter(b => activeFilters.has(b.state));
+
+  function toggleFilter(s) {
+    if (s === 'all') {
+      setActiveFilters(new Set());
+      return;
+    }
+    setActiveFilters(prev => {
+      const next = new Set(prev);
+      next.has(s) ? next.delete(s) : next.add(s);
+      return next;
+    });
+  }
 
   if (loading) return (
     <div className="max-w-6xl mx-auto px-4 py-16 text-center text-gray-500">
@@ -89,19 +114,22 @@ export default function Bills() {
 
       {/* Filter bar */}
       <div className="flex gap-2 flex-wrap mb-8">
-        {states.map(s => (
-          <button
-            key={s}
-            onClick={() => setFilter(s)}
-            className={`px-4 py-1.5 rounded-full text-sm font-semibold border transition-colors ${
-              filter === s
-                ? 'bg-navy text-white border-navy'
-                : 'bg-white text-gray-600 border-gray-300 hover:border-navy'
-            }`}
-          >
-            {s === 'all' ? 'All Bills' : s === 'US' ? 'Federal' : s}
-          </button>
-        ))}
+        {states.map(s => {
+          const isActive = s === 'all' ? activeFilters.size === 0 : activeFilters.has(s);
+          return (
+            <button
+              key={s}
+              onClick={() => toggleFilter(s)}
+              className={`px-4 py-1.5 rounded-full text-sm font-semibold border transition-colors ${
+                isActive
+                  ? 'bg-navy text-white border-navy'
+                  : 'bg-white text-gray-600 border-gray-300 hover:border-navy'
+              }`}
+            >
+              {s === 'all' ? 'All Bills' : s === 'US' ? 'Federal' : s}
+            </button>
+          );
+        })}
       </div>
 
       {filtered.length === 0 ? (

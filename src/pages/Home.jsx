@@ -17,7 +17,7 @@ export default function Home() {
           const order = { high: 0, medium: 1, low: 2 };
           return (order[a.urgency] ?? 3) - (order[b.urgency] ?? 3);
         })
-        .slice(0, 3);
+        .slice(0, 9);
       setTopBills(urgent);
     }
     loadTopBills();
@@ -69,12 +69,9 @@ export default function Home() {
               </button>
             </div>
             {zipError && <p className="text-orange text-sm font-medium">{zipError}</p>}
-            <p className="text-white/50 text-sm">
-              Or{' '}
-              <Link to="/bills" className="text-white/70 hover:text-white underline underline-offset-2 transition-colors">
-                browse all active bills
-              </Link>
-            </p>
+            <Link to="/bills" className="text-white/70 hover:text-white text-sm underline underline-offset-2 transition-colors">
+              See all bills →
+            </Link>
           </form>
         </div>
       </section>

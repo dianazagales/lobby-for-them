@@ -45,7 +45,7 @@ async function geocodeZip(zip) {
   return {
     lat: parseFloat(place.latitude),
     lng: parseFloat(place.longitude),
-    state: data['state abbreviation'],
+    state: place['state abbreviation'],
   };
 }
 

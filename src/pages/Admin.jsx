@@ -30,6 +30,7 @@ export default function Admin() {
   const [previewLegiData, setPreviewLegiData] = useState(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
+  const [billsTab, setBillsTab] = useState('all'); // 'all' | 'review'
 
   useEffect(() => {
     if (authed) loadBills();
@@ -329,27 +330,85 @@ export default function Admin() {
 
       {/* Bills list */}
       <section>
-        <h2 className="text-lg font-bold text-navy mb-4">All Bills ({bills.length})</h2>
-        <div className="space-y-3">
-          {bills.map(bill => (
-            <div key={bill.id} className="bg-white border border-gray-200 rounded-xl p-4 flex items-start justify-between gap-4">
-              <div>
-                <div className="flex gap-2 mb-1">
-                  <span className={`text-xs px-2 py-0.5 rounded font-bold ${bill.state === 'US' ? 'bg-navy text-white' : 'bg-gray-600 text-white'}`}>{bill.state === 'US' ? 'FEDERAL' : bill.state}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded font-semibold ${bill.urgency === 'high' ? 'bg-orange text-white' : bill.urgency === 'medium' ? 'bg-blue-500 text-white' : 'bg-gray-400 text-white'}`}>{bill.urgency}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded ${bill.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{bill.active ? 'Active' : 'Hidden'}</span>
+        {(() => {
+          const needsReview = bills.filter(b => !b.why_it_matters);
+          const visibleBills = billsTab === 'review' ? needsReview : bills;
+          return (
+            <>
+              <div className="flex items-center gap-3 mb-4">
+                <h2 className="text-lg font-bold text-navy">Bills</h2>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => setBillsTab('all')}
+                    className={`px-3 py-1 rounded-full text-sm font-semibold border transition-colors ${billsTab === 'all' ? 'bg-navy text-white border-navy' : 'bg-white text-gray-600 border-gray-300 hover:border-navy'}`}
+                  >
+                    All ({bills.length})
+                  </button>
+                  <button
+                    onClick={() => setBillsTab('review')}
+                    className={`px-3 py-1 rounded-full text-sm font-semibold border transition-colors ${billsTab === 'review' ? 'bg-amber-500 text-white border-amber-500' : 'bg-white border-gray-300 hover:border-amber-500 hover:text-amber-600'} ${needsReview.length > 0 ? 'text-amber-600' : 'text-gray-400'}`}
+                  >
+                    Needs Review ({needsReview.length})
+                  </button>
                 </div>
-                <p className="font-semibold text-navy text-sm">{bill.custom_title || `Bill ID: ${bill.legiscan_bill_id}`}</p>
-                <p className="text-xs text-gray-400 mt-0.5">LegiScan ID: {bill.legiscan_bill_id}</p>
               </div>
-              <div className="flex gap-2 flex-shrink-0">
-                <button onClick={() => handleEdit(bill)} className="text-sm text-navy hover:underline font-medium">Edit</button>
-                <button onClick={() => handleDelete(bill.id)} className="text-sm text-red-600 hover:underline font-medium">Delete</button>
+
+              {billsTab === 'review' && needsReview.length > 0 && (
+                <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
+                  These bills were flagged by the migration script because their animal welfare relevance couldn't be verified. They have no public description. Edit each one to write a description and re-activate, or delete/deactivate if they don't belong.
+                </div>
+              )}
+
+              <div className="space-y-3">
+                {visibleBills.map(bill => {
+                  const flagged = !bill.why_it_matters;
+                  return (
+                    <div key={bill.id} className={`bg-white border rounded-xl p-4 flex items-start justify-between gap-4 ${flagged ? 'border-amber-300' : 'border-gray-200'}`}>
+                      <div className="min-w-0">
+                        <div className="flex gap-2 flex-wrap mb-1">
+                          <span className={`text-xs px-2 py-0.5 rounded font-bold ${bill.state === 'US' ? 'bg-navy text-white' : 'bg-gray-600 text-white'}`}>{bill.state === 'US' ? 'FEDERAL' : bill.state}</span>
+                          <span className={`text-xs px-2 py-0.5 rounded font-semibold ${bill.urgency === 'high' ? 'bg-orange text-white' : bill.urgency === 'medium' ? 'bg-blue-500 text-white' : 'bg-gray-400 text-white'}`}>{bill.urgency}</span>
+                          <span className={`text-xs px-2 py-0.5 rounded ${bill.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{bill.active ? 'Active' : 'Hidden'}</span>
+                          {flagged && <span className="text-xs px-2 py-0.5 rounded bg-amber-100 text-amber-700 font-semibold">⚑ Needs Review</span>}
+                        </div>
+                        <p className="font-semibold text-navy text-sm truncate">{bill.custom_title || `Bill ID: ${bill.legiscan_bill_id}`}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">LegiScan ID: {bill.legiscan_bill_id}</p>
+                        {flagged && bill.active && (
+                          <p className="text-xs text-amber-600 mt-1">No description — not visible to users until why_it_matters is filled in or bill is hidden.</p>
+                        )}
+                      </div>
+                      <div className="flex gap-2 flex-shrink-0 items-start">
+                        <button onClick={() => handleEdit(bill)} className="text-sm text-navy hover:underline font-medium">Edit</button>
+                        {bill.active && (
+                          <button
+                            onClick={async () => { await updateBill(bill.id, { active: false }); loadBills(); }}
+                            className="text-sm text-gray-500 hover:underline font-medium"
+                          >
+                            Hide
+                          </button>
+                        )}
+                        {!bill.active && (
+                          <button
+                            onClick={async () => { await updateBill(bill.id, { active: true }); loadBills(); }}
+                            className="text-sm text-green-600 hover:underline font-medium"
+                          >
+                            Show
+                          </button>
+                        )}
+                        <button onClick={() => handleDelete(bill.id)} className="text-sm text-red-600 hover:underline font-medium">Delete</button>
+                      </div>
+                    </div>
+                  );
+                })}
+                {visibleBills.length === 0 && (
+                  <p className="text-gray-500 text-sm text-center py-8">
+                    {billsTab === 'review' ? 'No bills need review.' : 'No bills yet.'}
+                  </p>
+                )}
               </div>
-            </div>
-          ))}
-          {bills.length === 0 && <p className="text-gray-500 text-sm text-center py-8">No bills yet.</p>}
-        </div>
+            </>
+          );
+        })()}
       </section>
     </div>
   );

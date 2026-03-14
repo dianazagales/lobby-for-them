@@ -1,4 +1,5 @@
 import { readFileSync } from 'fs';
+import Anthropic from '/Users/dianazagales/Documents/Claude Code/lobby-for-them/node_modules/@anthropic-ai/sdk/index.mjs';
 import { createClient } from '/Users/dianazagales/Documents/Claude Code/lobby-for-them/node_modules/@supabase/supabase-js/dist/index.mjs';
 
 // Parse .env manually
@@ -13,15 +14,18 @@ for (const line of envFile.split('\n')) {
   }
 }
 
-const LEGISCAN_KEY = env['VITE_LEGISCAN_API_KEY'];
-const SUPABASE_URL = env['VITE_SUPABASE_URL'];
+const LEGISCAN_KEY    = env['VITE_LEGISCAN_API_KEY'];
+const SUPABASE_URL    = env['VITE_SUPABASE_URL'];
 const SUPABASE_ANON_KEY = env['VITE_SUPABASE_ANON_KEY'];
+const ANTHROPIC_KEY   = env['ANTHROPIC_API_KEY'];
 
 console.log('Environment loaded.');
 console.log('Supabase URL:', SUPABASE_URL);
 console.log('LegiScan key present:', !!LEGISCAN_KEY);
+console.log('Anthropic key present:', !!ANTHROPIC_KEY);
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase  = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const anthropic = ANTHROPIC_KEY ? new Anthropic({ apiKey: ANTHROPIC_KEY }) : null;
 
 // Status codes to SKIP (dead/passed/enacted)
 const SKIP_STATUSES = new Set([5, 6, 8, 11]);
@@ -41,14 +45,39 @@ function truncateTitle(title, max = 80) {
   return (lastSpace > 0 ? truncated.slice(0, lastSpace) : truncated) + '...';
 }
 
-// Generate why_it_matters
-function generateWhyItMatters(bill) {
+// Generate why_it_matters via Claude (falls back to template if API key missing)
+async function generateWhyItMatters(bill) {
+  if (!anthropic) return generateWhyItMattersFallback(bill);
+
+  const stateLabel = (bill.state === 'US') ? 'federal' : `${bill.state} state`;
+  const prompt = `You are writing content for a civic action website called "Lobby for Them" that helps everyday people contact their representatives about animal welfare legislation.
+
+Write 3-4 sentences explaining why this specific bill matters for animal welfare and why someone should take action. Be emotional but factual. Be specific to this bill — do not use generic language. Focus on the real impact on animals. End with a call to action.
+
+Bill: ${bill.bill_number} (${stateLabel})
+Title: ${bill.title}
+
+Write only the 3-4 sentences. No headers, no bullet points, no extra commentary.`;
+
+  try {
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-0',
+      max_tokens: 300,
+      messages: [{ role: 'user', content: prompt }],
+    });
+    return response.content[0]?.text?.trim() || generateWhyItMattersFallback(bill);
+  } catch (err) {
+    console.log(`    Claude error for ${bill.bill_number}: ${err.message} — using fallback`);
+    return generateWhyItMattersFallback(bill);
+  }
+}
+
+// Fallback template (used when no Anthropic key is configured)
+function generateWhyItMattersFallback(bill) {
   const title = bill.title || '';
   const state = bill.state || '';
   const billNum = bill.bill_number || '';
   const stateLabel = state === 'US' ? 'federal' : `${state} state`;
-
-  // Try to make it specific based on title keywords
   const titleLower = title.toLowerCase();
 
   if (titleLower.includes('puppy mill') || titleLower.includes('puppy farms')) {
@@ -57,12 +86,6 @@ function generateWhyItMatters(bill) {
     return `Backyard breeders often operate without proper oversight, leading to dogs that suffer from genetic diseases, poor living conditions, and inadequate care. ${billNum} (${stateLabel}) addresses these gaps by introducing standards that protect breeding dogs and their puppies. Holding breeders accountable saves lives and reduces the number of sick animals entering shelters. This bill is a critical step toward humane breeding practices.`;
   } else if (titleLower.includes('commercial breed') || titleLower.includes('dog breed')) {
     return `Commercial dog breeding operations can expose animals to inhumane conditions when there is insufficient regulation and oversight. ${billNum} (${stateLabel}) seeks to establish meaningful standards that protect breeding dogs from neglect and abuse. Stronger laws mean healthier dogs, more informed consumers, and reduced burden on animal shelters. Supporting this bill sends a clear message that animals are not commodities.`;
-  } else if (titleLower.includes('animal welfare') || titleLower.includes('animal protection')) {
-    return `Animal welfare legislation is essential to prevent the systemic cruelty that occurs in unregulated breeding operations across the country. ${billNum} (${stateLabel}) would strengthen protections for dogs in commercial and private breeding settings. Every year, hundreds of thousands of dogs suffer in conditions that would be illegal under stronger oversight. This bill has the power to fundamentally improve lives for these vulnerable animals.`;
-  } else if (titleLower.includes('license') || titleLower.includes('permit') || titleLower.includes('registr')) {
-    return `Licensing and registration requirements are among the most effective tools for ensuring breeding dogs receive proper care. ${billNum} (${stateLabel}) introduces accountability measures that would allow authorities to identify and shut down inhumane operations. Without these requirements, bad actors continue to breed dogs in secrecy and squalor. Passing this bill would give animals a fighting chance at humane treatment.`;
-  } else if (titleLower.includes('inspection') || titleLower.includes('enforce')) {
-    return `Inspections and enforcement are the backbone of any meaningful animal welfare framework. ${billNum} (${stateLabel}) would expand oversight authority and ensure breeding facilities are held to real standards. Currently, many facilities operate for years without any meaningful review, leaving dogs to suffer undetected. This bill gives inspectors and advocates the tools they need to intervene.`;
   } else {
     return `Dogs in commercial breeding operations often lack basic protections, leading to preventable suffering on a massive scale. ${billNum} (${stateLabel}) addresses critical gaps in animal welfare law that allow irresponsible breeders to operate unchecked. Passing this legislation would create real accountability and meaningful protections for breeding dogs and their puppies. Your support could make the difference between suffering and safety for thousands of animals.`;
   }
@@ -235,7 +258,7 @@ for (const bill of fullBills) {
     legiscan_bill_id: billId,
     state: state,
     custom_title: customTitle,
-    why_it_matters: generateWhyItMatters(bill),
+    why_it_matters: await generateWhyItMatters(bill),
     email_subject: generateEmailSubject(bill),
     email_body: generateEmailBody(bill),
     urgency: getUrgency(bill.status),
