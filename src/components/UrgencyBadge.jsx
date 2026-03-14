@@ -14,11 +14,11 @@ export default function UrgencyBadge({ urgency }) {
   const tooltip = TOOLTIPS[urgency] || TOOLTIPS.medium;
 
   return (
-    <span className="relative group inline-flex">
+    <span className="relative group/badge inline-flex">
       <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wide cursor-default ${className}`}>
         {label}
       </span>
-      <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 w-48 rounded bg-gray-900 px-2.5 py-1.5 text-xs text-white text-center leading-snug opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50 shadow-lg whitespace-normal">
+      <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 w-48 rounded bg-gray-900 px-2.5 py-1.5 text-xs text-white text-center leading-snug opacity-0 group-hover/badge:opacity-100 transition-opacity duration-150 z-50 shadow-lg whitespace-normal">
         {tooltip}
         <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
       </span>

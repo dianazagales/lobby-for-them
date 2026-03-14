@@ -81,33 +81,41 @@ async function getStateReps(lat, lng) {
 
 export async function getRepresentatives(zip) {
   try {
-    // Always fetch federal reps; geocode + state reps in parallel
-    const geocodePromise = geocodeZip(zip);
-    const federalPromise = getFederalReps(zip);
-
-    const [geocodeResult, federalReps] = await Promise.all([
-      geocodePromise.catch(err => { console.warn('Geocode failed:', err); return null; }),
-      federalPromise.catch(err => { console.warn('Congress API failed:', err); return null; }),
+    // Geocode and fetch federal reps in parallel
+    const [geocodeResult, allFederalReps] = await Promise.all([
+      geocodeZip(zip).catch(err => { console.warn('[civic] Geocode failed:', err); return null; }),
+      getFederalReps(zip).catch(err => { console.warn('[civic] Congress API failed:', err); return null; }),
     ]);
 
-    if (federalReps === null && geocodeResult === null) {
+    if (allFederalReps === null && geocodeResult === null) {
       return { error: 'Could not look up representatives. Please check your zip code and try again.', reps: null };
     }
 
-    let stateReps = [];
-    let userState = geocodeResult?.state || null;
+    const userState = geocodeResult?.state || null;
+    console.log(`[civic] Zip ${zip} resolved to state: ${userState}`);
 
+    // Congress.gov returns members from all states — filter to the resolved state only
+    const federalReps = userState && allFederalReps
+      ? allFederalReps.filter(r => r.state && r.state.toUpperCase() === userState.toUpperCase())
+      : (allFederalReps || []);
+
+    console.log(`[civic] Federal reps for ${userState}:`, federalReps.map(r => `${r.name} (${r.office})`));
+
+    let stateReps = [];
     if (geocodeResult) {
       stateReps = await getStateReps(geocodeResult.lat, geocodeResult.lng).catch(err => {
-        console.warn('Open States API failed:', err);
+        console.warn('[civic] Open States API failed:', err);
         return [];
       });
     }
 
-    const reps = [...(federalReps || []), ...stateReps];
+    console.log(`[civic] State reps:`, stateReps.map(r => `${r.name} (${r.office})`));
+
+    const reps = [...federalReps, ...stateReps];
+    console.log(`[civic] Total reps returned: ${reps.length}`);
     return { error: null, reps, state: userState };
   } catch (err) {
-    console.error('getRepresentatives error:', err);
+    console.error('[civic] getRepresentatives error:', err);
     return { error: 'Failed to look up representatives. Please check your zip code and try again.', reps: null };
   }
 }

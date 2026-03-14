@@ -1,6 +1,20 @@
 import { Link } from 'react-router-dom';
 import UrgencyBadge from './UrgencyBadge';
 
+const STATE_NAMES = {
+  AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',
+  CO:'Colorado',CT:'Connecticut',DE:'Delaware',FL:'Florida',GA:'Georgia',
+  HI:'Hawaii',ID:'Idaho',IL:'Illinois',IN:'Indiana',IA:'Iowa',
+  KS:'Kansas',KY:'Kentucky',LA:'Louisiana',ME:'Maine',MD:'Maryland',
+  MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MS:'Mississippi',MO:'Missouri',
+  MT:'Montana',NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',
+  NM:'New Mexico',NY:'New York',NC:'North Carolina',ND:'North Dakota',OH:'Ohio',
+  OK:'Oklahoma',OR:'Oregon',PA:'Pennsylvania',RI:'Rhode Island',SC:'South Carolina',
+  SD:'South Dakota',TN:'Tennessee',TX:'Texas',UT:'Utah',VT:'Vermont',
+  VA:'Virginia',WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming',
+  DC:'Washington D.C.',
+};
+
 // Status IDs where action is no longer possible — never show as Urgent
 const TERMINAL_STATUSES = new Set([2, 3, 4, 8]); // Engrossed, Enrolled, Passed, Chaptered
 
@@ -17,8 +31,14 @@ export default function BillCard({ bill, legiData }) {
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow p-5 flex flex-col gap-3">
       <div className="flex items-start justify-between gap-2">
         <div className="flex gap-2 flex-wrap">
-          <span className={`text-xs font-bold px-2 py-0.5 rounded ${bill.state === 'US' ? 'bg-navy text-white' : 'bg-gray-700 text-white'}`}>
-            {bill.state === 'US' ? 'FEDERAL' : bill.state}
+          <span className="relative group/state inline-flex">
+            <span className={`inline-flex items-center text-xs font-bold px-2 py-0.5 rounded cursor-default ${bill.state === 'US' ? 'bg-navy text-white' : 'bg-gray-700 text-white'}`}>
+              {bill.state === 'US' ? 'FEDERAL' : bill.state}
+            </span>
+            <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 w-48 rounded bg-gray-900 px-2.5 py-1.5 text-xs text-white text-center leading-snug opacity-0 group-hover/state:opacity-100 transition-opacity duration-150 z-50 shadow-lg whitespace-normal">
+              {bill.state === 'US' ? 'Federal bill — applies nationwide' : (STATE_NAMES[bill.state] || bill.state)}
+              <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+            </span>
           </span>
           <UrgencyBadge urgency={urgency} />
         </div>

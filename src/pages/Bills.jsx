@@ -12,8 +12,8 @@ const NON_ACTIONABLE_STATUSES = new Set([3, 4, 5, 6, 8, 11]); // Enrolled, Passe
 
 const SORT_OPTIONS = [
   { value: 'urgent',  label: 'Most Urgent First' },
-  { value: 'newest',  label: 'Newest First' },
-  { value: 'oldest',  label: 'Oldest First' },
+  { value: 'newest',  label: 'Most Recent Activity' },
+  { value: 'oldest',  label: 'Least Recent Activity' },
   { value: 'state',   label: 'State A–Z' },
 ];
 
@@ -120,12 +120,33 @@ export default function Bills() {
     );
   }
 
-  // Sort
+  // Sort — applied after all filters
   filtered = [...filtered].sort((a, b) => {
-    if (sort === 'urgent') return (URGENCY_ORDER[a.urgency] ?? 3) - (URGENCY_ORDER[b.urgency] ?? 3);
-    if (sort === 'newest') return b.id - a.id;
-    if (sort === 'oldest') return a.id - b.id;
-    if (sort === 'state')  return (a.state || '').localeCompare(b.state || '');
+    if (sort === 'urgent') {
+      return (URGENCY_ORDER[a.urgency] ?? 3) - (URGENCY_ORDER[b.urgency] ?? 3);
+    }
+    if (sort === 'newest' || sort === 'oldest') {
+      const getDate = (billId) => {
+        const ld = legiDataMap[billId];
+        if (!ld) return '';
+        // Prefer history array (most reliable); fall back to top-level field
+        const history = ld.history || [];
+        const fromHistory = history.length > 0 ? history[history.length - 1].date : '';
+        const topLevel = (ld.last_action_date && ld.last_action_date !== '0000-00-00')
+          ? ld.last_action_date : '';
+        return fromHistory || topLevel;
+      };
+      const da = getDate(a.legiscan_bill_id);
+      const db = getDate(b.legiscan_bill_id);
+      // Dates are 'YYYY-MM-DD' so lexicographic comparison is correct
+      return sort === 'newest' ? db.localeCompare(da) : da.localeCompare(db);
+    }
+    if (sort === 'state') {
+      // Federal bills always go last
+      if (a.state === 'US' && b.state !== 'US') return 1;
+      if (a.state !== 'US' && b.state === 'US') return -1;
+      return (a.state || '').localeCompare(b.state || '');
+    }
     return 0;
   });
 
@@ -177,15 +198,20 @@ export default function Bills() {
 
       {/* Sort — floated right, above the third column */}
       <div className="flex justify-end mb-3">
-        <select
-          value={sort}
-          onChange={e => setSort(e.target.value)}
-          className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange bg-white"
-        >
-          {SORT_OPTIONS.map(o => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
+        <div className="relative">
+          <select
+            value={sort}
+            onChange={e => setSort(e.target.value)}
+            className="appearance-none border border-gray-300 rounded-lg pl-4 pr-10 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent bg-white cursor-pointer"
+          >
+            {SORT_OPTIONS.map(o => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+          <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">
+            ▾
+          </span>
+        </div>
       </div>
 
       {filtered.length === 0 ? (

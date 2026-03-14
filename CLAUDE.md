@@ -53,6 +53,23 @@ Required variables (set in .env locally and in Netlify):
 - Always keep code mobile responsive
 - Always keep code clean and readable
 
+## Bill display rules
+- Only show bills that are actionable — users must be able to
+  contact a rep and make a difference
+- Actionable statuses: Introduced, In Progress, In Committee,
+  Active, Engrossed
+- Never show bills with status: Passed, Signed, Failed, Vetoed,
+  Dead, Tabled
+- Bills have an is_active boolean in Supabase — always filter
+  by is_active = true on all public-facing queries
+- When fetching from LegiScan, always update status and set
+  is_active = false if the bill is no longer actionable
+- URGENT badge should never appear on Engrossed bills —
+  demote to ACTIVE since it has already passed one chamber
+- During batch import, any bill with last_action_date older
+  than 1 year is automatically checked against LegiScan for
+  a newer version. If none found, it is marked active = false.
+
 ## Most sensitive pages — be extra careful here
 - src/pages/Bills.jsx — filtering, search, and zip logic are complex
 - src/pages/BillDetail.jsx — email composer and rep lookup

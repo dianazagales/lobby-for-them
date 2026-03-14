@@ -131,6 +131,71 @@ A concerned constituent from {{user_zip}}`;
 // Sleep helper
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+// ── Staleness helpers ──────────────────────────────────────────────────────
+
+const ONE_YEAR_AGO = new Date();
+ONE_YEAR_AGO.setFullYear(ONE_YEAR_AGO.getFullYear() - 1);
+const ONE_YEAR_AGO_STR = ONE_YEAR_AGO.toISOString().slice(0, 10); // 'YYYY-MM-DD'
+
+function getLastActionDate(bill) {
+  const history = bill.history || [];
+  if (history.length > 0) return history[history.length - 1].date;
+  if (bill.last_action_date && bill.last_action_date !== '0000-00-00') return bill.last_action_date;
+  return null;
+}
+
+function isStale(bill) {
+  const date = getLastActionDate(bill);
+  if (!date) return true;
+  return date < ONE_YEAR_AGO_STR;
+}
+
+// Search LegiScan for a newer version of the same bill (reintroduced in a newer session)
+async function findNewerVersion(bill) {
+  // Use the first 5 significant words of the title as a search query
+  const keywords = (bill.title || '')
+    .replace(/[^\w\s]/g, ' ')
+    .split(/\s+/)
+    .filter(w => w.length > 3)
+    .slice(0, 5)
+    .join(' ');
+
+  if (!keywords) return null;
+
+  const state = bill.state && bill.state !== 'US' ? `&state=${bill.state}` : '&state=ALL';
+  const url = `https://api.legiscan.com/?key=${LEGISCAN_KEY}&op=getSearch&query=${encodeURIComponent(keywords)}${state}`;
+
+  try {
+    const res = await fetch(url);
+    const json = await res.json();
+    if (json.status !== 'OK' || !json.searchresult) return null;
+
+    const candidates = Object.values(json.searchresult)
+      .filter(r => r.bill_id && r.bill_id !== bill.bill_id && !SKIP_STATUSES.has(r.status));
+
+    if (candidates.length === 0) return null;
+
+    // Pick the highest bill_id (most recently introduced) among candidates
+    candidates.sort((a, b) => b.bill_id - a.bill_id);
+    const best = candidates[0];
+
+    // Fetch full details to confirm it has recent activity
+    await sleep(1000);
+    const detailUrl = `https://api.legiscan.com/?key=${LEGISCAN_KEY}&op=getBill&id=${best.bill_id}`;
+    const detailRes = await fetch(detailUrl);
+    const detailJson = await detailRes.json();
+    if (detailJson.status !== 'OK' || !detailJson.bill) return null;
+
+    const fresh = detailJson.bill;
+    const freshDate = getLastActionDate(fresh);
+    if (!freshDate || freshDate < ONE_YEAR_AGO_STR) return null; // still stale
+
+    return fresh;
+  } catch {
+    return null;
+  }
+}
+
 // Step 1: Search LegiScan
 const SEARCH_TERMS = ['puppy mill', 'backyard breeding', 'commercial breeder', 'dog breeder'];
 const allBillIds = new Map(); // bill_id -> basic info
@@ -207,8 +272,29 @@ for (let i = 0; i < activeBillIds.length; i++) {
       continue;
     }
 
-    const bill = data.bill;
+    let bill = data.bill;
     console.log(`    Got: ${bill.bill_number} (${bill.state}) — status ${bill.status} — ${bill.title?.slice(0, 60)}`);
+
+    // ── Staleness check ────────────────────────────────────────────────────
+    if (isStale(bill)) {
+      const lastDate = getLastActionDate(bill) || 'no date';
+      console.log(`    ⚠ Stale (last action: ${lastDate}) — searching for newer version...`);
+
+      const newer = await findNewerVersion(bill);
+      await sleep(500);
+
+      if (newer) {
+        console.log(`    ✓ Updated to newer version: ${newer.bill_number} (ID ${newer.bill_id}) — last action: ${getLastActionDate(newer)}`);
+        bill = newer;
+      } else {
+        console.log(`    ✗ No current version found — will be marked inactive (stale - hidden from site)`);
+        bill._forceInactive = true;
+      }
+    } else {
+      console.log(`    ✓ Current — no changes needed (last action: ${getLastActionDate(bill)})`);
+    }
+    // ──────────────────────────────────────────────────────────────────────
+
     fullBills.push(bill);
   } catch (err) {
     console.log(`    Error: ${err.message}`);
@@ -254,6 +340,8 @@ for (const bill of fullBills) {
   // Build custom title
   const customTitle = `${truncateTitle(bill.title || '', 80)} (${bill.bill_number})`;
 
+  const isActive = !bill._forceInactive && !SKIP_STATUSES.has(bill.status);
+
   const record = {
     legiscan_bill_id: billId,
     state: state,
@@ -262,10 +350,11 @@ for (const bill of fullBills) {
     email_subject: generateEmailSubject(bill),
     email_body: generateEmailBody(bill),
     urgency: getUrgency(bill.status),
-    active: true,
+    active: isActive,
   };
 
-  console.log(`  Inserting: ${bill.bill_number} (${state}) — urgency: ${record.urgency}`);
+  const activeLabel = isActive ? 'active' : 'inactive (stale)';
+  console.log(`  Inserting: ${bill.bill_number} (${state}) — urgency: ${record.urgency} — ${activeLabel}`);
 
   const { error: insertError } = await supabase
     .from('featured_bills')

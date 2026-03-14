@@ -81,7 +81,7 @@ export default function BillDetail() {
         <h1 className="text-2xl md:text-3xl font-extrabold text-navy leading-tight mb-4">{title}</h1>
 
         {legiData && (
-          <div className="bg-warm-white rounded-xl p-5 space-y-2 text-sm">
+          <div className="bg-warm-white rounded-xl px-0 py-3 space-y-2 text-sm">
             <div className="flex flex-wrap gap-x-8 gap-y-2">
               <div>
                 <span className="font-semibold text-gray-700">Status: </span>
@@ -99,9 +99,27 @@ export default function BillDetail() {
                   <span className="text-gray-600">{lastAction.action} ({new Date(lastAction.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })})</span>
                 </div>
               )}
+              {bill.stance === 'support' && (
+                <div>
+                  <span className="font-semibold text-gray-700">Our Stance: </span>
+                  <span className="inline-flex items-center gap-1" style={{ color: '#2d7a3a' }}>
+                    <svg className="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414L8.414 15l-4.121-4.121a1 1 0 111.414-1.414L8.414 12.172l6.879-6.879a1 1 0 011.414 0z" clipRule="evenodd"/></svg>
+                    We Support This Bill
+                  </span>
+                </div>
+              )}
+              {bill.stance === 'oppose' && (
+                <div>
+                  <span className="font-semibold text-gray-700">Our Stance: </span>
+                  <span className="inline-flex items-center gap-1" style={{ color: '#c0392b' }}>
+                    <svg className="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"/></svg>
+                    We Oppose This Bill
+                  </span>
+                </div>
+              )}
             </div>
             {legiData.url && (
-              <a href={legiData.url} target="_blank" rel="noopener noreferrer" className="text-orange hover:underline text-xs font-medium">
+              <a href={legiData.url} target="_blank" rel="noopener noreferrer" className="text-orange hover:underline text-xs font-medium mt-2 inline-block">
                 Read full bill text ↗
               </a>
             )}

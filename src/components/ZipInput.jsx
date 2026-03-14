@@ -29,27 +29,25 @@ export default function ZipInput({ onRepsLoaded, compact = false }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className={compact ? 'flex gap-2' : 'space-y-3'}>
-      <div className={compact ? 'flex gap-2 flex-1' : ''}>
-        <input
-          type="text"
-          inputMode="numeric"
-          placeholder="Enter your zip code"
-          value={inputZip}
-          onChange={e => setInputZip(e.target.value.replace(/\D/g, '').slice(0, 5))}
-          maxLength={5}
-          className={`border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent ${compact ? 'w-36' : 'w-full'}`}
-          aria-label="ZIP code"
-        />
-        <button
-          type="submit"
-          disabled={loading}
-          className={`bg-orange hover:bg-orange-dark text-white font-semibold rounded-lg px-5 py-2 text-sm transition-colors disabled:opacity-60 ${compact ? '' : 'w-full'}`}
-        >
-          {loading ? 'Looking up...' : 'Find My Reps'}
-        </button>
-      </div>
-      {error && <p className="text-red-600 text-sm">{error}</p>}
+    <form onSubmit={handleSubmit} className={compact ? 'flex gap-2' : 'flex flex-col sm:flex-row sm:items-center gap-2'}>
+      <input
+        type="text"
+        inputMode="numeric"
+        placeholder="Enter your zip code"
+        value={inputZip}
+        onChange={e => setInputZip(e.target.value.replace(/\D/g, '').slice(0, 5))}
+        maxLength={5}
+        className={`border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange focus:border-transparent ${compact ? 'w-36' : 'flex-1 sm:max-w-[280px]'}`}
+        aria-label="ZIP code"
+      />
+      <button
+        type="submit"
+        disabled={loading}
+        className="bg-orange hover:bg-orange-dark text-white font-semibold rounded-lg px-5 py-2 text-sm transition-colors disabled:opacity-60 whitespace-nowrap"
+      >
+        {loading ? 'Looking up...' : 'Find My Reps'}
+      </button>
+      {error && <p className="text-red-600 text-sm w-full">{error}</p>}
     </form>
   );
 }
