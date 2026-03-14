@@ -25,8 +25,7 @@ CREATE TABLE IF NOT EXISTS admin_settings (
   password_hash TEXT NOT NULL
 );
 
--- Seed admin password (default: lobbyforthem2025)
-INSERT INTO admin_settings (password_hash) VALUES ('lobbyforthem2025');
+-- Admin password is set via VITE_ADMIN_PASSWORD environment variable, not seeded here.
 
 -- Seed featured bills
 INSERT INTO featured_bills (legiscan_bill_id, state, custom_title, why_it_matters, email_subject, email_body, urgency, active) VALUES
