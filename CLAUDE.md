@@ -88,6 +88,35 @@ Read CLAUDE.md at the start of every new session and whenever
 working on something that touches multiple files or core
 functionality.
 
+## Rep Lookup Architecture
+How `src/lib/civic.js` resolves representatives for a given zip + bill scope.
+**Do not change this without understanding why each piece exists.**
+
+### STATE bills → Open States API (VITE_OPENSTATES_API_KEY)
+1. Geocode zip via Zippopotam.us → lat/lng
+2. Call `https://v3.openstates.org/people.geo?lat=&lng=`
+3. **CRITICAL: filter results to `jurisdiction.classification === 'state'` only**
+   Open States returns federal reps (senators, house rep) alongside state reps.
+   Without this filter, federal reps leak into state bill pages.
+4. Returns: state senator + state house rep only
+
+### FEDERAL bills → Congress.gov API (VITE_CONGRESS_API_KEY)
+1. Geocode zip via Zippopotam.us → state abbreviation
+2. Call `https://api.congress.gov/v3/member/{stateCode}?currentMember=true`
+3. Look up congressional district from Supabase `zip_districts` table
+   (Census Bureau 118th Congress ZCTA crosswalk — see "Zip-to-District Data" below)
+4. Filter house reps to only the one whose district matches; fall back to all if not found
+5. Returns: 2 US Senators + 1 US House rep
+
+### Scope isolation — never break this
+- `getRepresentatives(zip, 'federal')` calls Congress.gov only, never Open States
+- `getRepresentatives(zip, 'state')` calls Open States only, never Congress.gov
+- Reps are stored in **local component state only** (`EmailComposer.jsx`)
+- `ZipContext` stores only the zip string (for pre-filling the input) — never reps
+- `EmailComposer` initializes `localReps = null` on mount; populated only after
+  the user submits their zip for that specific bill
+- Never combine state and federal rep results
+
 ## Zip-to-District Data
 - The `zip_districts` table in Supabase maps every US zip code to its
   congressional district number and state abbreviation
