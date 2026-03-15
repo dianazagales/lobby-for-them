@@ -5,24 +5,21 @@ import RepCard from './RepCard';
 import { filterRepsForBill } from '../lib/civic';
 
 export default function EmailComposer({ bill, legiData }) {
-  const { reps, userState } = useZip();
-  const [localReps, setLocalReps] = useState(reps);
-  const [localState, setLocalState] = useState(userState);
   const { zip } = useZip();
+  const [localReps, setLocalReps] = useState(null);
+  const [localState, setLocalState] = useState(null);
 
   function buildEmailBody(rep) {
     const billName = bill.custom_title || legiData?.title || `Bill #${bill.legiscan_bill_id}`;
     const userZip  = zip || '[your zip]';
 
     if (bill.email_template) {
-      // New format: body-only template — add greeting and sign-off dynamically
       const body = bill.email_template
         .replace(/{{bill_name}}/g, billName)
         .replace(/{{user_zip}}/g, userZip);
       return `Dear ${rep.name},\n\n${body}\n\nA concerned constituent from ${userZip}`;
     }
 
-    // Legacy fallback: email_body contains the full template with placeholders
     return (bill.email_body || '')
       .replace(/{{bill_name}}/g, billName)
       .replace(/{{user_zip}}/g, userZip)
@@ -30,8 +27,8 @@ export default function EmailComposer({ bill, legiData }) {
       .replace(/My name is a constituent/g, 'I am a constituent');
   }
 
-  function handleRepsLoaded(newReps, state) {
-    setLocalReps(newReps);
+  function handleRepsLoaded(reps, state) {
+    setLocalReps(reps);
     setLocalState(state);
   }
 
@@ -42,7 +39,7 @@ export default function EmailComposer({ bill, legiData }) {
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-bold text-navy mb-2">Contact Your Representatives</h2>
-        <ZipInput onRepsLoaded={handleRepsLoaded} />
+        <ZipInput onRepsLoaded={handleRepsLoaded} scope={bill.state === 'US' ? 'federal' : 'state'} />
       </div>
 
       {wrongState && (

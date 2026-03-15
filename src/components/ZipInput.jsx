@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useZip } from '../context/ZipContext';
 import { getRepresentatives } from '../lib/civic';
 
-export default function ZipInput({ onRepsLoaded, compact = false }) {
-  const { zip, setZip, setReps, setUserState } = useZip();
+export default function ZipInput({ onRepsLoaded, compact = false, scope = 'federal' }) {
+  const { zip, setZip } = useZip();
   const [inputZip, setInputZip] = useState(zip || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -16,15 +16,13 @@ export default function ZipInput({ onRepsLoaded, compact = false }) {
     }
     setError(null);
     setLoading(true);
-    const { reps, error: apiError, state } = await getRepresentatives(inputZip);
+    const { reps, error: apiError, state } = await getRepresentatives(inputZip, scope);
     setLoading(false);
     if (apiError) {
       setError(apiError);
       return;
     }
     setZip(inputZip);
-    setReps(reps);
-    setUserState(state);
     onRepsLoaded?.(reps, state);
   }
 

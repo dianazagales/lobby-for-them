@@ -4,11 +4,9 @@ const ZipContext = createContext(null);
 
 export function ZipProvider({ children }) {
   const [zip, setZip] = useState('');
-  const [reps, setReps] = useState(null);
-  const [userState, setUserState] = useState(null);
 
   return (
-    <ZipContext.Provider value={{ zip, setZip, reps, setReps, userState, setUserState }}>
+    <ZipContext.Provider value={{ zip, setZip }}>
       {children}
     </ZipContext.Provider>
   );

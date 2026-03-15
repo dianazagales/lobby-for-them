@@ -7,11 +7,11 @@ representatives in one click.
 
 ## Tech stack
 - React + Vite + Tailwind CSS + React Router
-- Supabase (bills database)
+- Supabase (bills database + zip_districts table)
 - LegiScan API (live bill data, 24hr cache in Supabase)
-- Congress.gov API (federal rep lookup by zip)
-- Open States API (state rep lookup by zip)
-- Zippopotam.us (zip to state, no key needed)
+- Congress.gov API (federal rep lookup by state code)
+- Open States API (state rep lookup by lat/lng)
+- Zippopotam.us (zip to state + lat/lng, no key needed)
 - Netlify (hosting, auto-deploys from GitHub main branch)
 - Namecheap (domain: lobbforthem.org)
 
@@ -27,6 +27,7 @@ representatives in one click.
 - src/context/ZipContext.jsx — zip + reps state across pages
 - scripts/seed-puppy-bills.mjs — bulk bill import script
 - scripts/generate-why-it-matters.mjs — AI description generator
+- scripts/import-zip-districts.mjs — loads Census zip-to-district crosswalk into Supabase
 
 ## Color scheme (do not change without being asked)
 - Primary navy: #1a2744
@@ -86,6 +87,19 @@ Never manually commit dist/ — Netlify builds it from source.
 Read CLAUDE.md at the start of every new session and whenever
 working on something that touches multiple files or core
 functionality.
+
+## Zip-to-District Data
+- The `zip_districts` table in Supabase maps every US zip code to its
+  congressional district number and state abbreviation
+- Data comes from the US Census Bureau ZCTA-to-Congressional District
+  crosswalk (currently 118th Congress, 2023–2025)
+- Used by `src/lib/civic.js` to filter Congress.gov house members down
+  to the one rep whose district matches the user's zip code
+- To update after redistricting: get the new crosswalk file from
+  https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/
+  and re-run `node scripts/import-zip-districts.mjs`
+- The script does a full upsert so it's safe to re-run at any time
+- Redistricting happens after each decennial census — next update ~2031
 
 ## Keeping this file up to date
 - If any tech stack, file structure, color scheme, environment

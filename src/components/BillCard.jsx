@@ -35,7 +35,7 @@ export default function BillCard({ bill, legiData }) {
             <span className={`inline-flex items-center text-xs font-bold px-2 py-0.5 rounded cursor-default ${bill.state === 'US' ? 'bg-navy text-white' : 'bg-gray-700 text-white'}`}>
               {bill.state === 'US' ? 'FEDERAL' : bill.state}
             </span>
-            <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 w-48 rounded bg-gray-900 px-2.5 py-1.5 text-xs text-white text-center leading-snug opacity-0 group-hover/state:opacity-100 transition-opacity duration-150 z-50 shadow-lg whitespace-normal">
+            <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 rounded bg-gray-900 px-2.5 py-1.5 text-xs text-white text-center leading-snug opacity-0 group-hover/state:opacity-100 transition-opacity duration-150 z-50 shadow-lg whitespace-nowrap" style={{ width: 'fit-content' }}>
               {bill.state === 'US' ? 'Federal bill — applies nationwide' : (STATE_NAMES[bill.state] || bill.state)}
               <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
             </span>

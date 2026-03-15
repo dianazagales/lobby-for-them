@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { getFeaturedBills, getCachedLegiScanData, setCachedLegiScanData, deactivateBill } from '../lib/supabase';
 import { getBill } from '../lib/legiscan';
-import { getRepresentatives } from '../lib/civic';
 import { useZip } from '../context/ZipContext';
 import BillCard from '../components/BillCard';
 
@@ -29,7 +28,7 @@ export default function Bills() {
   const [error, setError] = useState(null);
 
   const [searchParams] = useSearchParams();
-  const { setZip, setReps, setUserState } = useZip();
+  const { setZip } = useZip();
 
   useEffect(() => {
     async function load() {
@@ -84,14 +83,7 @@ export default function Bills() {
       }
     }
 
-    async function resolveReps() {
-      const { reps, state } = await getRepresentatives(zipParam);
-      if (reps) setReps(reps);
-      if (state) setUserState(state);
-    }
-
     resolveState();
-    resolveReps();
   }, [searchParams]);
 
   function toggleFilter(s) {
