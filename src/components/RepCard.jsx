@@ -30,44 +30,38 @@ export default function RepCard({ rep, emailSubject, emailBody }) {
         </div>
       </div>
 
-      {rep.email ? (
-        <>
-          <div>
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">
-              Email (editable)
-            </label>
-            <textarea
-              value={body}
-              onChange={e => setBody(e.target.value)}
-              rows={8}
-              className="w-full text-sm border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-orange resize-y font-mono"
-            />
-          </div>
-          <div className="flex gap-3 flex-wrap">
-            <a
-              href={mailtoLink}
-              className="bg-orange hover:bg-orange-dark text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
-            >
-              Open in Email ↗
-            </a>
-            <button
-              onClick={copyToClipboard}
-              className="border border-gray-300 hover:border-navy text-gray-700 font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
-            >
-              {copied ? '✓ Copied!' : 'Copy to Clipboard'}
-            </button>
-          </div>
-        </>
-      ) : (
-        <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-600">
-          <p className="font-medium mb-1">No direct email available</p>
-          {rep.website && (
-            <a href={rep.website} target="_blank" rel="noopener noreferrer" className="text-orange hover:underline">
-              Contact via official website ↗
-            </a>
-          )}
-        </div>
-      )}
+      <div>
+        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">
+          Email (editable)
+        </label>
+        <textarea
+          value={body}
+          onChange={e => setBody(e.target.value)}
+          rows={8}
+          className="w-full text-sm border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-orange resize-y font-mono"
+        />
+      </div>
+      <div className="flex gap-3 flex-wrap">
+        {mailtoLink && (
+          <a
+            href={mailtoLink}
+            className="bg-orange hover:bg-orange-dark text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
+          >
+            Open in Email ↗
+          </a>
+        )}
+        <button
+          onClick={copyToClipboard}
+          className="border border-gray-300 hover:border-navy text-gray-700 font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
+        >
+          {copied ? '✓ Copied!' : 'Copy to Clipboard'}
+        </button>
+        {!mailtoLink && rep.website && (
+          <a href={rep.website} target="_blank" rel="noopener noreferrer" className="border border-gray-300 hover:border-navy text-gray-700 font-semibold px-4 py-2 rounded-lg text-sm transition-colors">
+            Contact via website ↗
+          </a>
+        )}
+      </div>
     </div>
   );
 }
