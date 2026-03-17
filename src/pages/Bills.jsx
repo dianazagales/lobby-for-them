@@ -161,7 +161,7 @@ export default function Bills() {
       <div className="mb-8">
         <h1 className="text-3xl font-extrabold text-navy mb-3">Active Bills</h1>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-500">Include states without bills</span>
+          <span className="text-sm text-gray-500">Show states without bills</span>
           <button
             role="switch"
             aria-checked={showAllStates}
