@@ -9,22 +9,38 @@ export default function EmailComposer({ bill, legiData }) {
   const [localReps, setLocalReps] = useState(null);
   const [localState, setLocalState] = useState(null);
 
+  function formatRepName(name) {
+    if (!name) return name;
+    // Convert "Last, First" → "First Last"
+    if (name.includes(',')) {
+      const [last, first] = name.split(',').map(s => s.trim());
+      return first ? `${first} ${last}` : last;
+    }
+    return name;
+  }
+
   function buildEmailBody(rep) {
     const billName = bill.custom_title || legiData?.title || `Bill #${bill.legiscan_bill_id}`;
     const userZip  = zip || '[your zip]';
+    const repName  = formatRepName(rep.name);
 
-    if (bill.email_template) {
-      const body = bill.email_template
-        .replace(/{{bill_name}}/g, billName)
-        .replace(/{{user_zip}}/g, userZip);
-      return `Dear ${rep.name},\n\n${body}\n\nA concerned constituent from ${userZip}`;
-    }
+    const source = bill.email_template || bill.email_body || '';
 
-    return (bill.email_body || '')
+    // Strip any greeting or sign-off already embedded in the stored template
+    let body = source
+      .replace(/^Dear\s[^\n]*,\s*\n+/i, '')
+      .replace(/\n+Sincerely,\n[\s\S]*$/i, '')
+      .replace(/\n+A concerned constituent from[^\n]*$/i, '')
+      .trimEnd();
+
+    // Replace placeholders
+    body = body
       .replace(/{{bill_name}}/g, billName)
       .replace(/{{user_zip}}/g, userZip)
-      .replace(/{{rep_name}}/g, rep.name)
+      .replace(/{{rep_name}}/g, repName)
       .replace(/My name is a constituent/g, 'I am a constituent');
+
+    return `Dear ${repName},\n\n${body}\n\nA concerned constituent from ${userZip}`;
   }
 
   function handleRepsLoaded(reps, state) {
