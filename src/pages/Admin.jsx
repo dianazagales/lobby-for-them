@@ -253,7 +253,7 @@ export default function Admin() {
 
   // ── Admin layout ───────────────────────────────────────────────────────────
   return (
-    <div className="flex -mx-4 -mt-10 -mb-10" style={{ minHeight: 'calc(100vh - 64px)' }}>
+    <div className="flex min-h-screen">
 
       {/* ── Sidebar ── */}
       <aside className="w-56 bg-navy text-white flex-shrink-0 flex flex-col sticky top-0 h-screen">
