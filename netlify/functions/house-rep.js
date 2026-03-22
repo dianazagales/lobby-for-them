@@ -71,7 +71,7 @@ export async function handler(event) {
     console.error('[house-rep] Stack:', err.stack);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: err.message, stack: err.stack }),
+      body: JSON.stringify({ error: 'Internal server error' }),
     };
   }
 }

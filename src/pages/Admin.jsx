@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getAllBillsAdmin, createBill, updateBill, deleteBill, verifyAdminPassword, getCachedLegiScanData, setCachedLegiScanData } from '../lib/supabase';
+import { getAllBillsAdmin, createBill, updateBill, deleteBill, verifyAdminPassword, getCachedLegiScanData, setCachedLegiScanData, getContactMessages, markMessageRead, deleteMessage } from '../lib/supabase';
 import { getBill, searchBills } from '../lib/legiscan';
 import BillCard from '../components/BillCard';
 
@@ -66,6 +66,7 @@ export default function Admin() {
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState(null);
   const [bills, setBills] = useState([]);
+  const [messages, setMessages] = useState([]);
   const [section, setSection] = useState('dashboard');
   const [form, setForm] = useState(EMPTY_BILL);
   const [editingId, setEditingId] = useState(null);
@@ -79,7 +80,7 @@ export default function Admin() {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(null);
 
-  useEffect(() => { if (authed) loadBills(); }, [authed]);
+  useEffect(() => { if (authed) { loadBills(); loadMessages(); } }, [authed]);
 
   useEffect(() => {
     if (!toast) return;
@@ -99,6 +100,11 @@ export default function Admin() {
     setBills(data || []);
   }
 
+  async function loadMessages() {
+    const { data } = await getContactMessages(password);
+    setMessages(data || []);
+  }
+
   function setField(field, value) {
     setForm(prev => ({ ...prev, [field]: value }));
   }
@@ -107,7 +113,7 @@ export default function Admin() {
     e.preventDefault();
     setSaving(true);
     const billData = { ...form, legiscan_bill_id: parseInt(form.legiscan_bill_id) || 0 };
-    const result = editingId ? await updateBill(editingId, billData) : await createBill(billData);
+    const result = editingId ? await updateBill(editingId, billData, password) : await createBill(billData, password);
     if (result.error) {
       setToast({ type: 'error', text: 'Save failed: ' + result.error.message });
     } else {
@@ -151,7 +157,7 @@ export default function Admin() {
 
   async function handleDelete(id) {
     if (!confirm('Delete this bill? This cannot be undone.')) return;
-    await deleteBill(id);
+    await deleteBill(id, password);
     loadBills();
     setToast({ type: 'success', text: 'Bill deleted.' });
   }
@@ -178,13 +184,13 @@ export default function Admin() {
   const total       = bills.length;
   const activeCount = bills.filter(b => b.active).length;
   const hiddenCount = bills.filter(b => !b.active).length;
-  const reviewCount = bills.filter(b => !b.why_it_matters).length;
+  const reviewCount = bills.filter(b => b.active && !b.why_it_matters).length;
 
   // Filtered bill list
   const visibleBills = bills.filter(b => {
     if (billFilter === 'active' && !b.active) return false;
     if (billFilter === 'hidden' &&  b.active) return false;
-    if (billFilter === 'review' &&  b.why_it_matters) return false;
+    if (billFilter === 'review' && (!b.active || b.why_it_matters)) return false;
     if (billSearch) {
       const q = billSearch.toLowerCase();
       return (b.custom_title || '').toLowerCase().includes(q) ||
@@ -249,6 +255,11 @@ export default function Admin() {
         <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
       </svg>
     ),
+    messages: (
+      <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+      </svg>
+    ),
   };
 
   // ── Admin layout ───────────────────────────────────────────────────────────
@@ -269,6 +280,7 @@ export default function Admin() {
           <NavItem id="bills"     label="Bills"           icon={icons.bills}     active={section === 'bills'}     onClick={setSection} badge={reviewCount} />
           <NavItem id="add"       label={editingId ? 'Edit Bill' : 'Add Bill'} icon={icons.add} active={section === 'add'} onClick={setSection} />
           <NavItem id="search"    label="LegiScan Search" icon={icons.search}    active={section === 'search'}    onClick={setSection} />
+          <NavItem id="messages"  label="Messages"        icon={icons.messages}  active={section === 'messages'}  onClick={() => { loadMessages(); setSection('messages'); }} badge={messages.filter(m => !m.read).length} />
         </nav>
 
         {/* Footer */}
@@ -427,7 +439,7 @@ export default function Admin() {
                           <span className={`text-xs font-semibold ${bill.active ? 'text-green-600' : 'text-gray-400'}`}>
                             {bill.active ? '● Active' : '○ Hidden'}
                           </span>
-                          {!bill.why_it_matters && (
+                          {bill.active && !bill.why_it_matters && (
                             <span className="ml-2 text-xs text-amber-500 font-semibold">⚑ Review</span>
                           )}
                         </td>
@@ -435,7 +447,7 @@ export default function Admin() {
                           <div className="flex items-center gap-3 justify-end">
                             <button onClick={() => startEdit(bill)} className="text-xs text-navy hover:text-orange font-semibold">Edit</button>
                             <button
-                              onClick={async () => { await updateBill(bill.id, { active: !bill.active }); loadBills(); }}
+                              onClick={async () => { await updateBill(bill.id, { active: !bill.active }, password); loadBills(); }}
                               className={`text-xs font-semibold ${bill.active ? 'text-gray-400 hover:text-gray-600' : 'text-green-600 hover:text-green-700'}`}
                             >
                               {bill.active ? 'Hide' : 'Show'}
@@ -601,6 +613,58 @@ export default function Admin() {
                     legiData={previewLegiData}
                   />
                 </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Messages ─────────────────────────────────────────────────── */}
+        {section === 'messages' && (
+          <div className="p-8 max-w-3xl">
+            <h1 className="text-2xl font-extrabold text-navy mb-6">Messages</h1>
+
+            {messages.length === 0 ? (
+              <p className="text-gray-400 text-sm text-center py-16">No messages yet.</p>
+            ) : (
+              <div className="space-y-4">
+                {messages.map(msg => (
+                  <div
+                    key={msg.id}
+                    className={`bg-white border rounded-xl p-5 ${msg.read ? 'border-gray-200' : 'border-orange/40 shadow-sm'}`}
+                  >
+                    <div className="flex items-start justify-between gap-4 mb-3">
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {!msg.read && (
+                            <span className="text-xs bg-orange text-white font-bold px-2 py-0.5 rounded-full">New</span>
+                          )}
+                          <span className="font-semibold text-navy text-sm">{msg.name || 'Anonymous'}</span>
+                          {msg.email && (
+                            <a href={`mailto:${msg.email}`} className="text-xs text-orange hover:underline">{msg.email}</a>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {new Date(msg.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <button
+                          onClick={async () => { await markMessageRead(msg.id, !msg.read, password); loadMessages(); }}
+                          className="text-xs text-gray-400 hover:text-navy font-medium"
+                        >
+                          {msg.read ? 'Mark unread' : 'Mark read'}
+                        </button>
+                        <button
+                          onClick={async () => { if (!confirm('Delete this message?')) return; await deleteMessage(msg.id, password); loadMessages(); }}
+                          className="text-xs text-red-500 hover:text-red-700 font-medium"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{msg.message}</p>
+                  </div>
+                ))}
               </div>
             )}
           </div>

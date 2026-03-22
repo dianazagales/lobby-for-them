@@ -64,26 +64,39 @@ export async function setCachedLegiScanData(billId, billData) {
 
 export async function getAllBillsAdmin() {
   if (!supabase) return { data: getMockBills(), error: null };
-  const { data, error } = await supabase
-    .from('featured_bills')
-    .select('*')
-    .order('created_at', { ascending: false });
-  return { data: data || [], error };
+  const pageSize = 1000;
+  let all = [];
+  let from = 0;
+  while (true) {
+    const { data, error } = await supabase
+      .from('featured_bills')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .range(from, from + pageSize - 1);
+    if (error) return { data: all, error };
+    all = all.concat(data || []);
+    if (!data || data.length < pageSize) break;
+    from += pageSize;
+  }
+  return { data: all, error: null };
 }
 
-export async function createBill(bill) {
+export async function createBill(bill, password) {
   if (!supabase) return { data: null, error: new Error('Supabase not configured') };
-  return supabase.from('featured_bills').insert([bill]).select().single();
+  const { data, error } = await supabase.rpc('admin_create_bill', { pwd: password, bill_data: bill });
+  return { data, error };
 }
 
-export async function updateBill(id, updates) {
+export async function updateBill(id, updates, password) {
   if (!supabase) return { data: null, error: new Error('Supabase not configured') };
-  return supabase.from('featured_bills').update(updates).eq('id', id).select().single();
+  const { data, error } = await supabase.rpc('admin_update_bill', { pwd: password, target_id: id, updates });
+  return { data, error };
 }
 
-export async function deleteBill(id) {
+export async function deleteBill(id, password) {
   if (!supabase) return { error: new Error('Supabase not configured') };
-  return supabase.from('featured_bills').delete().eq('id', id);
+  const { data, error } = await supabase.rpc('admin_delete_bill', { pwd: password, target_id: id });
+  return { data, error };
 }
 
 export async function deactivateBill(id) {
@@ -93,11 +106,32 @@ export async function deactivateBill(id) {
 
 export async function verifyAdminPassword(password) {
   if (!supabase) return false;
-  const { data } = await supabase
-    .from('admin_settings')
-    .select('password_hash')
-    .single();
-  return data && data.password_hash === password;
+  const { data } = await supabase.rpc('verify_admin_password', { pwd: password });
+  return data === true;
+}
+
+export async function submitContactMessage({ name, email, message }) {
+  if (!supabase) return { error: new Error('Supabase not configured') };
+  const { error } = await supabase.from('contact_messages').insert([{ name, email, message }]);
+  return { error };
+}
+
+export async function getContactMessages(password) {
+  if (!supabase) return { data: [], error: null };
+  const { data, error } = await supabase.rpc('admin_get_messages', { pwd: password });
+  return { data: data || [], error };
+}
+
+export async function markMessageRead(id, isRead, password) {
+  if (!supabase) return { error: null };
+  const { error } = await supabase.rpc('admin_mark_message_read', { pwd: password, target_id: id, is_read: isRead });
+  return { error };
+}
+
+export async function deleteMessage(id, password) {
+  if (!supabase) return { error: null };
+  const { error } = await supabase.rpc('admin_delete_message', { pwd: password, target_id: id });
+  return { error };
 }
 
 // Mock data for when Supabase is not configured

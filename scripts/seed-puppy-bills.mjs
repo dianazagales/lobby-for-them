@@ -14,17 +14,17 @@ for (const line of envFile.split('\n')) {
   }
 }
 
-const LEGISCAN_KEY    = env['VITE_LEGISCAN_API_KEY'];
-const SUPABASE_URL    = env['VITE_SUPABASE_URL'];
-const SUPABASE_ANON_KEY = env['VITE_SUPABASE_ANON_KEY'];
-const ANTHROPIC_KEY   = env['ANTHROPIC_API_KEY'];
+const LEGISCAN_KEY        = env['VITE_LEGISCAN_API_KEY'];
+const SUPABASE_URL        = env['VITE_SUPABASE_URL'];
+const SUPABASE_SERVICE_KEY = env['SUPABASE_SERVICE_ROLE_KEY'];
+const ANTHROPIC_KEY       = env['ANTHROPIC_API_KEY'];
 
 console.log('Environment loaded.');
 console.log('Supabase URL:', SUPABASE_URL);
 console.log('LegiScan key present:', !!LEGISCAN_KEY);
 console.log('Anthropic key present:', !!ANTHROPIC_KEY);
 
-const supabase  = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase  = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 const anthropic = ANTHROPIC_KEY ? new Anthropic({ apiKey: ANTHROPIC_KEY }) : null;
 
 // Status codes to SKIP (dead/passed/enacted)

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { getFeaturedBills, getCachedLegiScanData, setCachedLegiScanData, deactivateBill } from '../lib/supabase';
+import { getFeaturedBills, getCachedLegiScanData, setCachedLegiScanData } from '../lib/supabase';
 import { getBill } from '../lib/legiscan';
 import { useZip } from '../context/ZipContext';
 import BillCard from '../components/BillCard';
@@ -73,7 +73,6 @@ export default function Bills() {
         if (cached) {
           // If LegiScan reports a non-actionable status, silently deactivate and hide
           if (NON_ACTIONABLE_STATUSES.has(cached.status)) {
-            deactivateBill(bill.id);
             setBills(prev => prev.filter(b => b.id !== bill.id));
             continue;
           }

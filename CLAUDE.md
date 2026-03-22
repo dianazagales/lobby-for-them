@@ -50,6 +50,7 @@ Required variables (set in .env locally and in Netlify):
 - NEVER commit .env, .env.local, or dist/ to git
 - NEVER change copy/text unless explicitly asked
 - NEVER change colors or design unless explicitly asked
+- NEVER run git add, git commit, or git push — version control is handled by the user
 - Always use Tailwind utility classes as the primary styling method
 - Always keep code mobile responsive
 - Always keep code clean and readable
