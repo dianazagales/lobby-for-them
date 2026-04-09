@@ -1,9 +1,11 @@
 # Lobby for Them — Claude Code Guide
 
 ## Project overview
-Animal welfare advocacy site. Users enter a zip code, see active
-animal welfare bills in their state + federal, and email their
-representatives in one click.
+Animal welfare advocacy site focused on legislation that affects
+dogs — including dog-specific bills and broader animal welfare bills
+that protect dogs (cruelty laws, pet shop sales bans, shelter
+standards, etc.). Users enter a zip code, see active bills in their
+state + federal, and email their representatives in one click.
 
 ## Tech stack
 - React + Vite + Tailwind CSS + React Router

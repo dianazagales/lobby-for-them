@@ -63,31 +63,23 @@ const sleep     = ms => new Promise(r => setTimeout(r, ms));
 // ── Keyword groups ────────────────────────────────────────────────────────────
 
 const KEYWORD_GROUPS = [
-  // Group A — Core
+  // Group A — Core (broad terms that surface dog-related bills)
   'animal welfare', 'animal cruelty', 'animal protection', 'animal abuse',
   'animal neglect', 'cruelty to animals', 'humane treatment',
-  // Group B — Companion animals
+  // Group B — Dogs & companion animals
   'puppy mill', 'commercial breeder', 'pet store', 'animal shelter',
   'spay neuter', 'tethering', 'dog chaining', 'dangerous dog',
-  'animal hoarding', 'declawing', 'hot car', 'trap neuter return',
-  // Group C — Farm animals
-  'factory farming', 'gestation crate', 'battery cage', 'cage-free',
-  'humane slaughter', 'livestock welfare', 'farm animal', 'foie gras',
-  'ag-gag', 'downed animal',
-  // Group D — Wildlife & exotics
-  'trophy hunting', 'wildlife trafficking', 'fur ban', 'trapping',
-  'captive wildlife', 'exotic animal', 'roadside zoo', 'big cat',
-  // Group E — Fighting, entertainment & testing
-  'dog fighting', 'cockfighting', 'circus animal', 'greyhound racing',
-  'animal testing', 'cosmetic testing', 'laboratory animal',
-  // Group F — Legal protections
+  'animal hoarding', 'hot car', 'trap neuter return',
+  'dog fighting', 'dog breed', 'breed specific', 'pit bull',
+  'pet adoption', 'pet rescue', 'retail pet sales', 'animal abandonment',
+  // Group C — Legal protections
   'animal cruelty felony', 'animal abuser registry',
   'pets in protection orders', 'courtroom animal advocate',
 ];
 
 const FEDERAL_EXTRA = [
-  "PACT Act", "Goldie's Act", "Big Cat Safety Act",
-  "Safeguard American Food Exports", "Preventing Animal Cruelty and Torture",
+  "PACT Act", "Goldie's Act", "Puppy Protection Act",
+  "Preventing Animal Cruelty and Torture",
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
